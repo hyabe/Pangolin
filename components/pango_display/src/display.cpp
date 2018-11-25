@@ -40,11 +40,11 @@
 #include <cstdlib>
 
 #include <pangolin/factory/factory_registry.h>
-#include <pangolin/window_frameworks.h>
 #include <pangolin/gl/glinclude.h>
 #include <pangolin/gl/gldraw.h>
 #include <pangolin/display/display.h>
 #include <pangolin/display/display_internal.h>
+#include <pangolin/display/window_frameworks.h>
 #include <pangolin/handler/handler.h>
 #include <pangolin/utils/simple_math.h>
 #include <pangolin/utils/timer.h>
@@ -137,16 +137,8 @@ WindowInterface& CreateWindowAndBind(std::string window_title, int w, int h, con
     win_uri.params.insert(std::end(win_uri.params), std::begin(params.params), std::end(params.params));
 
     // Fall back to default scheme if non specified.
-    if(win_uri.scheme.empty()) {
-#if defined(_LINUX_)
-      win_uri.scheme = "linux";
-#elif defined(_WIN_)
-      win_uri.scheme = "winapi";
-#elif defined(_OSX_)
-      win_uri.scheme = "cocoa";
-#else
-#     error "No default window api for this platform."
-#endif
+    if(win_uri.scheme.empty()) {        
+      win_uri.scheme = PANGO_DEFAULT_WIN_URI;
     }
 
     std::unique_ptr<WindowInterface> window = FactoryRegistry<WindowInterface>::I().Open(win_uri);

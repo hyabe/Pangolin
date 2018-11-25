@@ -241,18 +241,30 @@ void StandardizeRgbToColor(pangolin::Geometry& geom)
             const bool have_alpha = it_a != verts.attributes.end();
 
             if(verts.attributes.find("color") == verts.attributes.end()) {
-                auto& color = verts.attributes["color"];
-                color = it_r->second;
+                Geometry::Element::Attribute& red = it_r->second;
+                Geometry::Element::Attribute& color = verts.attributes["color"];
 
                 // TODO: Check that these really are contiguous in memory...
                 // Pick the right format
 
-                visit([&](auto&& attrib){
-                    using T = std::decay_t<decltype(attrib)>;
-                    color = Image<typename T::PixelType>(
-                        attrib.ptr, have_alpha ? 4 : 3, verts.h, verts.pitch
-                    );
-                }, it_r->second);
+                if(auto attrib = mpark::get_if<Image<float>>(&red)) {
+                    color = Image<float>(attrib->ptr, have_alpha ? 4 : 3, verts.h, verts.pitch);
+                }else if(auto attrib = get_if<Image<uint8_t>>(&red)) {
+                    color = Image<uint8_t>(attrib->ptr, have_alpha ? 4 : 3, verts.h, verts.pitch);
+                }else if(auto attrib = get_if<Image<uint16_t>>(&red)) {
+                    color = Image<uint16_t>(attrib->ptr, have_alpha ? 4 : 3, verts.h, verts.pitch);
+                }else if(auto attrib = get_if<Image<uint32_t>>(&red)) {
+                    color = Image<uint32_t>(attrib->ptr, have_alpha ? 4 : 3, verts.h, verts.pitch);
+                }
+
+//                // This seems to kill GCC 5.4
+//                std::experimental::visit([&](auto&& attrib){
+//                    using T = std::decay_t<decltype(attrib)>;
+//                    Image<typename T::PixelType> img(
+//                        attrib.ptr, have_alpha ? 4 : 3, verts.h, verts.pitch
+//                    );
+//                    color = img;
+//                }, red);
             }
             verts.attributes.erase(it_r);
             verts.attributes.erase(it_g);
